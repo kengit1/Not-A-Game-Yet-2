@@ -18,9 +18,13 @@ set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui)
 add_subdirectory(external/imgui-sfml)
 
 # Main executable
-add_executable(MyGame
-    src/main.cpp
+file(GLOB_RECURSE PROJECT_FILES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
 )
+
+add_executable(MyGame ${PROJECT_FILES})
 
 # Compiler warnings
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
