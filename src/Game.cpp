@@ -1,7 +1,6 @@
 #include "Game.h"
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Keyboard.hpp>
-#include <fstream>
 #include <iostream>
 
 Game::Game(const std::string& config)
@@ -94,7 +93,7 @@ void Game::spawnSmallEnemies(std::shared_ptr<Entity> e)
 }
 
 // spawns a bullet from a given entity to a target location
-void Game::spawnBullet(std::shared_ptr<Entity> entity, const Vec2& target)
+void Game::spawnBullet(std::shared_ptr<Entity> entity, const Vec2<float>& target)
 {
     // TODO: implement the spawning of a bullet which travels toward target
     //       - bullet speed is given as a scalar speed

@@ -1,15 +1,15 @@
 #pragma once
-#include "Vec2.h"
+#include "Vec2.hpp"
 #include <SFML/Graphics.hpp>
 
 class CTransform
 {
 public:
-    Vec2 pos = {0.0, 0.0};
-    Vec2 velocity = {0.0, 0.0};
+    Vec2<float> pos = {0.0f, 0.0f};
+    Vec2<float> velocity = {0.0, 0.0};
     float angle = 0;
 
-    CTransform(const Vec2& p, const Vec2& v, float a)
+    CTransform(const Vec2<float>& p, const Vec2<float>& v, float a)
         : pos(p),
           velocity(v),
           angle(a)
