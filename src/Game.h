@@ -1,6 +1,6 @@
 #pragma once
-#include "Entity.h"
-#include "EntityManager.h"
+#include "Entity.hpp"
+#include "EntityManager.hpp"
 #include <SFML/Graphics.hpp>
 
 struct PlayerConfig

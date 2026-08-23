@@ -1,13 +1,23 @@
 #pragma once
+
 #include "Vec2.hpp"
+
 #include <SFML/Graphics.hpp>
 
-class CTransform
+class Component
+{
+public:
+    bool exists = false;
+};
+
+class CTransform : public Component
 {
 public:
     Vec2<float> pos = {0.0f, 0.0f};
-    Vec2<float> velocity = {0.0, 0.0};
-    float angle = 0;
+    Vec2<float> velocity = {0.0f, 0.0f};
+    float angle = 0.0f;
+
+    CTransform() = default;
 
     CTransform(const Vec2<float>& p, const Vec2<float>& v, float a)
         : pos(p),
@@ -17,10 +27,12 @@ public:
     }
 };
 
-class CShape
+class CShape : public Component
 {
 public:
     sf::CircleShape circle;
+
+    CShape() = default;
 
     CShape(float radius, int points, const sf::Color& fill, const sf::Color& outline, float thickness)
         : circle(radius, points)
@@ -32,10 +44,12 @@ public:
     }
 };
 
-class CCollision
+class CCollision : public Component
 {
 public:
-    float radius = 0;
+    float radius = 0.0f;
+
+    CCollision() = default;
 
     CCollision(float r)
         : radius(r)
@@ -43,10 +57,12 @@ public:
     }
 };
 
-class CScore
+class CScore : public Component
 {
 public:
     int score = 0;
+
+    CScore() = default;
 
     CScore(int s)
         : score(s)
@@ -54,11 +70,13 @@ public:
     }
 };
 
-class CLifespan
+class CLifespan : public Component
 {
 public:
-    int remaining = 0; // amount of lifespan remaining on the entity
-    int total = 0;     // the total initial amount of lifespan
+    int remaining = 0;
+    int total = 0;
+
+    CLifespan() = default;
 
     CLifespan(int total)
         : remaining(total),
@@ -67,7 +85,7 @@ public:
     }
 };
 
-class CInput
+class CInput : public Component
 {
 public:
     bool up = false;
@@ -76,7 +94,5 @@ public:
     bool down = false;
     bool shoot = false;
 
-    CInput()
-    {
-    }
+    CInput() = default;
 };

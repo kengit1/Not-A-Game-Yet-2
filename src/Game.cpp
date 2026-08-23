@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Components.hpp"
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Keyboard.hpp>
 #include <iostream>
@@ -56,14 +57,12 @@ void Game::spawnPlayer()
     auto entity = m_entities.addEntity("player");
 
     // Give this entity a Transform so it spawns at (200,200) with velocity (1,1) and angle 0
-    entity->cTransform = std::make_shared<CTransform>(Vec2(200.0f, 200.0f), Vec2(1.0f, 1.0f), 0.0f);
+    entity->addComponent<CTransform>(Vec2<float>(200.0f, 200.0f), Vec2<float>(1.0f, 1.0f), 0.0f);
 
     // The entity's shape will have radius 32, 8 sides, dark grey fill, and red outline of thickness 4
-    entity->cShape = std::make_shared<CShape>(32.0f, 8, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f);
-
+    entity->addComponent<CShape>(32.0f, 8, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f);
+    entity->addComponent<CInput>();
     // Add an input component to the player so that we can use inputs
-    entity->cInput = std::make_shared<CInput>();
-
     // Since we want this Entity to be our player, set our Game's player variable to be this Entity
     // This goes slightly against the EntityManager paradigm, but we use the player so much it's worth it
     m_player = entity;
@@ -111,8 +110,7 @@ void Game::sMovement()
     // TODO: implement all entity movement in this function
     //       you should read the m_player->cInput component to determine if the player is moving
 
-    m_player->cTransform->pos.x += m_player->cTransform->velocity.x;
-    m_player->cTransform->pos.y += m_player->cTransform->velocity.y;
+    m_player->getComponent<CTransform>().pos += m_player->getComponent<CTransform>().velocity;
 }
 
 void Game::sLifespan()
@@ -148,13 +146,13 @@ void Game::sRender()
     //       sample drawing of the player Entity that we have created
     m_window.clear();
 
-    m_player->cShape->circle.setPosition({m_player->cTransform->pos.x, m_player->cTransform->pos.y});
+    m_player->getComponent<CShape>().circle.setPosition(
+        {m_player->getComponent<CTransform>().pos.x, m_player->getComponent<CTransform>().pos.y});
 
-    m_player->cTransform->angle += 1.0f;
-    m_player->cShape->circle.setRotation(sf::degrees(m_player->cTransform->angle));
+    m_player->getComponent<CTransform>().angle += 1.0f;
+    m_player->getComponent<CShape>().circle.setRotation(sf::degrees(m_player->getComponent<CTransform>().angle));
 
-    m_window.draw(m_player->cShape->circle);
-
+    m_window.draw(m_player->getComponent<CShape>().circle);
     m_window.display();
 }
 
@@ -180,7 +178,7 @@ void Game::sUserInput()
             {
                 case sf::Keyboard::Key::W:
                     std::cout << "W Key Pressed\n";
-                    m_player->cInput->up = true;
+                    m_player->getComponent<CInput>().up = true;
                     break;
 
                 default:
@@ -194,7 +192,7 @@ void Game::sUserInput()
             {
                 case sf::Keyboard::Key::W:
                     std::cout << "W Key Released\n";
-                    m_player->cInput->up = false;
+                    m_player->getComponent<CInput>().up = false;
                     break;
 
                 default:

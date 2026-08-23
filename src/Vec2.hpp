@@ -89,11 +89,20 @@ public:
 
     float dist(const Vec2& rhs) const
     {
-        return std::sqrt((rhs.x - x) * (rhs.x - x) + (rhs.y - y) * (rhs.y - y));
+        return std::sqrt(((rhs.x - x) * (rhs.x - x)) + ((rhs.y - y) * (rhs.y - y)));
     }
 
     float length() const
     {
         return std::sqrt(x * x + y * y);
+    }
+
+    Vec2 normalize()
+    {
+        if (length() <= static_cast<T>(0))
+        {
+            return Vec2(0, 0);
+        }
+        return Vec2(x / length(), y / length());
     }
 };
