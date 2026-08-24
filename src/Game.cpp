@@ -34,6 +34,7 @@ void Game::run()
         sMovement();
         sCollision();
         sUserInput();
+        m_player->getComponent<CTransform>().angle += 10.0f;
         sRender();
 
         // increment the current frame
@@ -115,15 +116,22 @@ void Game::sMovement()
 
 void Game::sLifespan()
 {
-    // TODO: implement all lifespan functionality
-    //
-    // for all entities
-    //      if entity has no lifespan component, skip it
-    //      if entity has > 0 remaining lifespan, subtract 1
-    //      if it has lifespan and is alive
-    //          scale its alpha channel properly
-    //      if it has lifespan and its time is up
-    //          destroy the entity
+    for (const auto& e : m_entities.getEntities())
+    {
+        auto& lifespan = e->getComponent<CLifespan>();
+        if (lifespan.exists)
+        {
+            if (lifespan.remaining > 0)
+            {
+                // TODO: implement the alpha channel transformation
+                lifespan.remaining -= 1;
+            }
+            if (lifespan.remaining < 0 && e->isActive())
+            {
+                e->destroy();
+            }
+        }
+    }
 }
 
 void Game::sCollision()
@@ -146,10 +154,7 @@ void Game::sRender()
     //       sample drawing of the player Entity that we have created
     m_window.clear();
 
-    m_player->getComponent<CShape>().circle.setPosition(
-        {m_player->getComponent<CTransform>().pos.x, m_player->getComponent<CTransform>().pos.y});
-
-    m_player->getComponent<CTransform>().angle += 1.0f;
+    m_player->getComponent<CShape>().circle.setPosition(m_player->getComponent<CTransform>().pos);
     m_player->getComponent<CShape>().circle.setRotation(sf::degrees(m_player->getComponent<CTransform>().angle));
 
     m_window.draw(m_player->getComponent<CShape>().circle);

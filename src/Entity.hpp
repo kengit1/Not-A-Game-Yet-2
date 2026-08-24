@@ -26,8 +26,6 @@ class Entity
     }
 
 public:
-    Entity() = default;
-
     bool isActive() const
     {
         return m_alive;

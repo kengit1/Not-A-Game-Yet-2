@@ -94,15 +94,16 @@ public:
 
     float length() const
     {
-        return std::sqrt(x * x + y * y);
+        return std::sqrt((x * x) + (y * y));
     }
 
     Vec2 normalize()
     {
-        if (length() <= static_cast<T>(0))
+        auto len = length();
+        if (len <= static_cast<T>(0))
         {
             return Vec2(0, 0);
         }
-        return Vec2(x / length(), y / length());
+        return Vec2(x / len, y / len);
     }
 };
