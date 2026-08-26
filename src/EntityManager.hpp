@@ -19,7 +19,7 @@ class EntityManager
     std::size_t m_totalEntities = 0;
 
     //? does it have to be really static ?
-    static void removeDeadEntities(EntityVec& vecE, EntityMap& map)
+    static void removeDeadEntities(EntityVec& vecE)
     {
         // use reset to release ownership of the managed object from the shared_Pointer
         // the release does not delete the managed object
@@ -27,23 +27,8 @@ class EntityManager
         std::erase_if(vecE,
                       [](const std::shared_ptr<Entity>& e)
                       {
-                          return e->isActive();
+                          return !e->isActive();
                           // as the destroy method will make this false
-                      });
-        // as we access the map itself then make sure that the isAlive is false in each map pair
-        for (auto& [tag, entityVec] : map)
-        {
-            std::erase_if(entityVec,
-                          [](const std::shared_ptr<Entity>& e)
-                          {
-                              return e->isActive();
-                          });
-        }
-        // then acces the same map to remove the first pair
-        std::erase_if(map,
-                      [](const auto& pair)
-                      {
-                          return pair.second.empty();
                       });
     }
 
@@ -55,20 +40,17 @@ public:
         for (auto& entity : m_entitiesToAdd)
         {
             m_entities.push_back(entity);
-            // if tag exist then add it to the same vector
-            // if new tag , create new vector then add the entity
             m_entityMap[entity->tag()].push_back(entity);
         }
 
         m_entitiesToAdd.clear();
-        removeDeadEntities(m_entities, m_entityMap);
 
-        /*
-        for (auto e : m_entities)
+        removeDeadEntities(m_entities);
+
+        for (auto& [tag, entityVec] : m_entityMap)
         {
-            // TODO: remove entities
+            removeDeadEntities(entityVec);
         }
-        */
     }
 
     std::shared_ptr<Entity> addEntity(const std::string& tag)

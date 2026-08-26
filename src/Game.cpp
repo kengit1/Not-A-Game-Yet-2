@@ -34,6 +34,7 @@ void Game::run()
         sMovement();
         sCollision();
         sUserInput();
+        sLifespan();
         m_player->getComponent<CTransform>().angle += 10.0f;
         sRender();
 
@@ -63,6 +64,7 @@ void Game::spawnPlayer()
     // The entity's shape will have radius 32, 8 sides, dark grey fill, and red outline of thickness 4
     entity->addComponent<CShape>(32.0f, 8, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f);
     entity->addComponent<CInput>();
+    //?entity->addComponent<CLifespan>(120); was just testing the removal of dead entities
     // Add an input component to the player so that we can use inputs
     // Since we want this Entity to be our player, set our Game's player variable to be this Entity
     // This goes slightly against the EntityManager paradigm, but we use the player so much it's worth it
@@ -124,9 +126,9 @@ void Game::sLifespan()
             if (lifespan.remaining > 0)
             {
                 // TODO: implement the alpha channel transformation
-                lifespan.remaining -= 1;
+                lifespan.remaining--;
             }
-            if (lifespan.remaining < 0 && e->isActive())
+            if (lifespan.remaining <= 0 && e->isActive())
             {
                 e->destroy();
             }
@@ -150,14 +152,21 @@ void Game::sEnemySpawner()
 
 void Game::sRender()
 {
-    // TODO: change the code below to draw ALL of the entities
-    //       sample drawing of the player Entity that we have created
     m_window.clear();
 
-    m_player->getComponent<CShape>().circle.setPosition(m_player->getComponent<CTransform>().pos);
-    m_player->getComponent<CShape>().circle.setRotation(sf::degrees(m_player->getComponent<CTransform>().angle));
+    // TODO: change the code below to draw ALL of the entities
+    //       sample drawing of the player Entity that we have created
 
-    m_window.draw(m_player->getComponent<CShape>().circle);
+    for (auto& entity : m_entities.getEntities())
+    {
+        if (entity->getComponent<CShape>().exists && entity->isActive())
+        {
+            entity->getComponent<CShape>().circle.setPosition(entity->getComponent<CTransform>().pos);
+            entity->getComponent<CShape>().circle.setRotation(sf::degrees(entity->getComponent<CTransform>().angle));
+
+            m_window.draw(entity->getComponent<CShape>().circle);
+        }
+    }
     m_window.display();
 }
 
