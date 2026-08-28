@@ -5,6 +5,14 @@
 #include <cstdint>
 #include <string>
 
+struct WindowConfig
+{
+    int width, height, frameLimit, fullScreen;
+    std::string fontPath;
+    int fontSize;
+    sf::Color fontColor;
+};
+
 struct PlayerConfig
 {
     int SR, CR, FR, FG, FB, OR, OG, OB, OT, V;
@@ -36,6 +44,7 @@ class Game
     sf::RenderWindow m_window;
     EntityManager m_entities;
     sf::Font m_font;
+    WindowConfig m_windowConfig;
     PlayerConfig m_playerConfig;
     EnemyConfig m_enemyConfig;
     BulletConfig m_bulletConfig;
@@ -47,6 +56,7 @@ class Game
 
     std::shared_ptr<Entity> m_player;
 
+    bool getConfig(const std::string& config);
     void init(const std::string& config);
     void setPaused(bool paused);
 

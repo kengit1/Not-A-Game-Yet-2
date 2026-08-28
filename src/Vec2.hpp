@@ -102,6 +102,12 @@ public:
         y *= val;
     }
 
+    void operator+=(const T val)
+    {
+        x += val;
+        y += val;
+    }
+
     void operator/=(const T val)
     {
         x /= val;
