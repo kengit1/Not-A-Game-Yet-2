@@ -1,7 +1,11 @@
 #include "Game.h"
 #include "Components.hpp"
+#include "EntityManager.hpp"
+#include "Vec2.hpp"
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Keyboard.hpp>
+#include <cstddef>
+#include <cstdio>
 #include <iostream>
 
 Game::Game(const std::string& config)
@@ -9,13 +13,31 @@ Game::Game(const std::string& config)
     init(config);
 }
 
+void Game::setDifficulty(Difficulty difficulty = Easy)
+{
+    // it will be usefuk with the imGui
+    //* right now , we adjust the cCollision
+    const auto& entityVec = m_entities.getEntities();
+    //! making the EnitityMnaager same name as the EntityVec is Wild
+    // simply , making every tangible entity its default cCollision is the same as its cShape
+    //! a simple but deprecated use , redius * enum value
+    for (const auto& entity : entityVec)
+    {
+        if (entity->isActive() && entity->getComponent<CCollision>().exists)
+        {
+            entity->getComponent<CCollision>().radius = entity->getComponent<CShape>().circle.getRadius() * difficulty;
+        }
+    }
+}
+
 void Game::init(const std::string& config)
 {
     // TODO: read in config file here
     //       use the premade PlayerConfig, EnemyConfig, BulletConfig variables
+    //?      i think we should consider adding the 'default difficulty'
 
     // set up default window parameters
-    m_window.create(sf::VideoMode({1280, 720}), "Assignment 2");
+    m_window.create(sf::VideoMode({1000, 500}), "Assignment 2");
     m_window.setFramerateLimit(60);
 
     spawnPlayer();
@@ -28,6 +50,7 @@ void Game::run()
     //       some systems shouldn't (movement / input)
     while (m_running)
     {
+        setDifficulty();
         m_entities.update();
 
         sEnemySpawner();
@@ -59,11 +82,12 @@ void Game::spawnPlayer()
     auto entity = m_entities.addEntity("player");
 
     // Give this entity a Transform so it spawns at (200,200) with velocity (1,1) and angle 0
-    entity->addComponent<CTransform>(Vec2<float>(200.0f, 200.0f), Vec2<float>(1.0f, 1.0f), 0.0f);
+    entity->addComponent<CTransform>(Vec2<float>(150.0f, 150.0f), Vec2<float>(3.0f, 3.0f), 0.0f);
 
     // The entity's shape will have radius 32, 8 sides, dark grey fill, and red outline of thickness 4
-    entity->addComponent<CShape>(32.0f, 8, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f);
+    entity->addComponent<CShape>(32.0f, 10, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f);
     entity->addComponent<CInput>();
+    entity->addComponent<CCollision>();
     //?entity->addComponent<CLifespan>(120); was just testing the removal of dead entities
     // Add an input component to the player so that we can use inputs
     // Since we want this Entity to be our player, set our Game's player variable to be this Entity
@@ -140,6 +164,45 @@ void Game::sCollision()
 {
     // TODO: implement all proper collisions between entities
     //       be sure to use the collision radius, NOT the shape radius
+    /*
+    i could've doen this  :
+    EntityManager manager;
+    auto player = manager.getEntities("Player");
+    auto bulletVec = manager.getEntities("Bullet");
+    auto enemyVec = manager.getEntities("Enemy");
+    */
+    // for sake of memory , Vec class has methods to see the length of the Vec & distance between Vecs
+    // Player - Wall
+    auto& posPlayer = m_player->getComponent<CTransform>().pos;
+    auto& velPlayer = m_player->getComponent<CTransform>().velocity;
+    auto radiusPlayer = m_player->getComponent<CShape>().circle.getRadius();
+    auto sizeWindow = m_window.getSize();
+    if (posPlayer.x + radiusPlayer > sizeWindow.x)
+    {
+        // initial logic , with inputs its better to make the up = false or zeroing the velocity
+        velPlayer.x *= -1;
+        // posPlayer.x = sizeWindow.x - radiusPlayer;
+    }
+
+    if (posPlayer.x - radiusPlayer < 0)
+    {
+        velPlayer.x *= -1;
+        // posPlayer.x = radiusPlayer;
+    }
+
+    if (posPlayer.y + radiusPlayer > sizeWindow.y)
+    {
+        // initial logic , with inputs its better to make the up = false or zerong the velocity
+        velPlayer.y *= -1;
+        // posPlayer.y = sizeWindow.y - radiusPlayer;
+    }
+    if (posPlayer.y - radiusPlayer < 0)
+    {
+        velPlayer.y *= -1;
+        // posPlayer.y = radiusPlayer;
+    }
+    // Bullet - Enemy
+    // Player - Enemy
 }
 
 void Game::sEnemySpawner()

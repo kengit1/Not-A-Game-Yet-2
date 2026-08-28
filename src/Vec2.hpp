@@ -75,6 +75,27 @@ public:
         y -= rhs.y;
     }
 
+    bool operator>(const Vec2& rhs)
+    {
+        if (rhs.x > x && rhs.y > y)
+            return true;
+        false;
+    }
+
+    bool operator<(const Vec2& rhs)
+    {
+        if (rhs.x < x && rhs.y < y)
+            return true;
+        false;
+    }
+
+    bool operator==(const Vec2& rhs)
+    {
+        if (rhs.x == x && rhs.y == y)
+            return true;
+        false;
+    }
+
     void operator*=(const T val)
     {
         x *= val;
@@ -87,7 +108,13 @@ public:
         y /= val;
     }
 
-    float dist(const Vec2& rhs) const
+    void operator>=(const T val)
+    {
+        x /= val;
+        y /= val;
+    }
+
+    float distance(const Vec2& rhs) const
     {
         return std::sqrt(((rhs.x - x) * (rhs.x - x)) + ((rhs.y - y) * (rhs.y - y)));
     }
@@ -95,6 +122,16 @@ public:
     float length() const
     {
         return std::sqrt((x * x) + (y * y));
+    }
+
+    float distance_squared(const Vec2& rhs) const
+    {
+        return ((rhs.x - x) * (rhs.x - x)) + ((rhs.y - y) * (rhs.y - y));
+    }
+
+    float length_squared() const
+    {
+        return (x * x) + (y * y);
     }
 
     Vec2 normalize()

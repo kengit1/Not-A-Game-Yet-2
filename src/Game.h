@@ -2,6 +2,8 @@
 #include "Entity.hpp"
 #include "EntityManager.hpp"
 #include <SFML/Graphics.hpp>
+#include <cstdint>
+#include <string>
 
 struct PlayerConfig
 {
@@ -19,6 +21,14 @@ struct BulletConfig
 {
     int SR, CR, FR, FG, FB, OR, OG, OB, OT, V, L;
     float S;
+};
+
+enum Difficulty
+{
+    //? reduce into bytes ?
+    Easy,
+    Medium,
+    Hard
 };
 
 class Game
@@ -39,6 +49,8 @@ class Game
 
     void init(const std::string& config);
     void setPaused(bool paused);
+
+    void setDifficulty(Difficulty difficulty);
 
     void sMovement();
     void sUserInput();
