@@ -37,11 +37,12 @@ void Game::setDifficulty(Difficulty difficulty = Easy)
 
 bool Game::getConfig(const std::string& config)
 {
-    std::ifstream file("build/config.txt");
+    std::ifstream file(RESOURCES_PATH "config.txt");
 
     if (!file)
     {
         std::cerr << "Failed to open file\n";
+        exit(1);
         return false;
     }
 
