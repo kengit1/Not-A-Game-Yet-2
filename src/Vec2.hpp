@@ -149,4 +149,9 @@ public:
         }
         return Vec2(x / len, y / len);
     }
+
+    float dot_product(const Vec2& rhs)
+    {
+        return rhs.x * x + rhs.y * y;
+    }
 };

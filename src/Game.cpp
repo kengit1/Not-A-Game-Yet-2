@@ -6,12 +6,15 @@
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Keyboard.hpp>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <memory>
+#include <utility>
 
 Game::Game(const std::string& config)
 {
@@ -30,7 +33,8 @@ void Game::setDifficulty(Difficulty difficulty = Easy)
     {
         if (entity->isActive() && entity->getComponent<CCollision>().exists)
         {
-            entity->getComponent<CCollision>().radius = entity->getComponent<CShape>().circle.getRadius() * difficulty;
+            entity->getComponent<CCollision>().radius =
+                entity->getComponent<CShape>().circle.getRadius() * static_cast<int>(difficulty);
         }
     }
 }
@@ -108,10 +112,13 @@ void Game::run()
     //       some systems shouldn't (movement / input)
     while (m_running)
     {
-        setDifficulty();
+        // setDifficulty();
         m_entities.update();
 
-        sEnemySpawner();
+        if (m_currentFrame - m_lastEnemySpawnTime > 10)
+        {
+            sEnemySpawner();
+        }
         sMovement();
         sCollision();
         sUserInput();
@@ -145,7 +152,7 @@ void Game::spawnPlayer()
     // The entity's shape will have radius 32, 8 sides, dark grey fill, and red outline of thickness 4
     entity->addComponent<CShape>(32.0f, 10, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f);
     entity->addComponent<CInput>();
-    entity->addComponent<CCollision>();
+    entity->addComponent<CCollision>(32.0f);
     //?entity->addComponent<CLifespan>(120); was just testing the removal of dead entities
     // Add an input component to the player so that we can use inputs
     // Since we want this Entity to be our player, set our Game's player variable to be this Entity
@@ -248,70 +255,73 @@ void Game::sLifespan()
 
 void Game::sCollision()
 {
-    // TODO: implement all proper collisions between entities
-    // for sake of memory , Vec class has methods to see the length of the Vec & distance between Vecs
-    // Player - Wall
-    auto& posPlayer = m_player->getComponent<CTransform>().pos;
-    auto& velPlayer = m_player->getComponent<CTransform>().velocity;
-    auto radiusPlayer = m_player->getComponent<CShape>().circle.getRadius();
+    // TODO: optimize and clean this function ASAP!
     auto sizeWindow = m_window.getSize();
-    if (posPlayer.x + radiusPlayer > sizeWindow.x)
+    for (const auto& entity : m_entities.getEntities())
     {
-        // initial logic , with inputs its better to make the up = false or zeroing the velocity
-        velPlayer.x *= -1;
-        // posPlayer.x = sizeWindow.x - radiusPlayer;
-    }
-
-    if (posPlayer.x - radiusPlayer < 0)
-    {
-        velPlayer.x *= -1;
-        // posPlayer.x = radiusPlayer;
-    }
-
-    if (posPlayer.y + radiusPlayer > sizeWindow.y)
-    {
-        // initial logic , with inputs its better to make the up = false or zerong the velocity
-        velPlayer.y *= -1;
-        // posPlayer.y = sizeWindow.y - radiusPlayer;
-    }
-    if (posPlayer.y - radiusPlayer < 0)
-    {
-        velPlayer.y *= -1;
-        // posPlayer.y = radiusPlayer;
-    }
-    // Bullet - Enemy
-    // Player - Enemy
-    // Enemy - Wall
-    std::shared_ptr<Entity> entity;
-    auto& posEnemy = entity->getComponent<CTransform>().pos;
-    for (const auto& enemy : m_entities.getEntities("enemy"))
-    {
-        auto& posEnemy = enemy->getComponent<CTransform>().pos;
-        auto& valEnemy = enemy->getComponent<CTransform>().velocity;
-        auto radEnemy = enemy->getComponent<CShape>().circle.getRadius();
-        if (posEnemy.x + radEnemy > sizeWindow.x)
+        if (entity->getComponent<CCollision>().exists)
         {
-            // initial logic , with inputs its better to make the up = false or zeroing the velocity
-            valEnemy.x *= -1;
-            // posPlayer.x = sizeWindow.x - radiusPlayer;
-        }
+            auto& posEntity = entity->getComponent<CTransform>().pos;
+            auto& velEntity = entity->getComponent<CTransform>().velocity;
+            auto radEntity = entity->getComponent<CShape>().circle.getRadius();
+            if (posEntity.x + radEntity > sizeWindow.x)
+            {
+                posEntity.x = sizeWindow.x - radEntity;
+                velEntity.x *= -1;
+            }
 
-        if (posEnemy.x - radEnemy < 0)
-        {
-            valEnemy.x *= -1;
-            // posPlayer.x = radiusPlayer;
-        }
+            if (posEntity.x - radEntity < 0)
+            {
+                posEntity.x = radEntity;
+                velEntity.x *= -1;
+            }
 
-        if (posEnemy.y + radEnemy > sizeWindow.y)
-        {
-            // initial logic , with inputs its better to make the up = false or zerong the velocity
-            valEnemy.y *= -1;
-            // posPlayer.y = sizeWindow.y - radiusPlayer;
-        }
-        if (posEnemy.y - radEnemy < 0)
-        {
-            valEnemy.y *= -1;
-            // posPlayer.y = radiusPlayer;
+            if (posEntity.y + radEntity > sizeWindow.y)
+            {
+                posEntity.y = sizeWindow.y - radEntity;
+                velEntity.y *= -1;
+            }
+            if (posEntity.y - radEntity < 0)
+            {
+                posEntity.y = radEntity;
+                velEntity.y *= -1;
+            }
+
+            for (const auto& collidingEntity : m_entities.getEntities())
+            {
+                if (entity == collidingEntity)
+                    continue;
+                if (entity->id() >= collidingEntity->id())
+                    continue;
+
+                if (collidingEntity->getComponent<CCollision>().exists)
+                {
+                    auto& posCollidingEntity = collidingEntity->getComponent<CTransform>().pos;
+                    auto& velCollidingEntity = collidingEntity->getComponent<CTransform>().velocity;
+                    auto radCollidingEntity = collidingEntity->getComponent<CShape>().circle.getRadius();
+                    float distanceSquared = posEntity.distance_squared(posCollidingEntity);
+                    float sumRadiiSquared = (radEntity + radCollidingEntity) * (radEntity + radCollidingEntity);
+
+                    if (distanceSquared < sumRadiiSquared)
+                    {
+                        float distance = std::sqrt(distanceSquared);
+                        float radiusSum = std::sqrt(sumRadiiSquared);
+                        float penetration = radiusSum - distance;
+
+                        Vec2<float> relativeVel = velCollidingEntity - velEntity;
+                        Vec2<float> normal = (posCollidingEntity - posEntity) / posEntity.distance(posCollidingEntity);
+                        float normalVel = relativeVel.dot_product(normal);
+                        posEntity -= normal * penetration * 0.5;
+                        posCollidingEntity += normal * penetration * 0.5;
+
+                        if (normalVel > 0)
+                            return;
+                        Vec2<float> impulseVec = normal * normalVel * -1;
+                        velEntity -= impulseVec;
+                        velCollidingEntity += impulseVec;
+                    }
+                }
+            }
         }
     }
 }
