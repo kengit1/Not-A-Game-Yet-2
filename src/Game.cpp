@@ -252,75 +252,129 @@ void Game::sLifespan()
 
 void Game::sCollision()
 {
-    // TODO: optimize and clean this function ASAP!
-    auto sizeWindow = m_window.getSize();
-    for (const auto& entity : m_entities.getEntities())
+    boundaryCollision();
+    entityCollision();
+}
+
+void Game::boundaryCollision()
+{
+    const auto windowSize = m_window.getSize();
+    const auto& entities = m_entities.getEntities();
+
+    for (const auto& entity : entities)
     {
-        if (entity->getComponent<CCollision>().exists)
+        auto& collision = entity->getComponent<CCollision>();
+
+        if (!collision.exists)
+            continue;
+
+        auto& transform = entity->getComponent<CTransform>();
+
+        auto& pos = transform.pos;
+        auto& velocity = transform.velocity;
+
+        const float radius = entity->getComponent<CCollision>().radius;
+
+        if (pos.x - radius < 0.0f)
         {
-            auto& posEntity = entity->getComponent<CTransform>().pos;
-            auto& velEntity = entity->getComponent<CTransform>().velocity;
-            auto radEntity = entity->getComponent<CShape>().circle.getRadius();
-            if (posEntity.x + radEntity > sizeWindow.x)
-            {
-                posEntity.x = sizeWindow.x - radEntity;
-                velEntity.x *= -1;
-            }
+            pos.x = radius;
+            velocity.x = -velocity.x;
+        }
+        else if (pos.x + radius > windowSize.x)
+        {
+            pos.x = windowSize.x - radius;
+            velocity.x = -velocity.x;
+        }
 
-            if (posEntity.x - radEntity < 0)
-            {
-                posEntity.x = radEntity;
-                velEntity.x *= -1;
-            }
-
-            if (posEntity.y + radEntity > sizeWindow.y)
-            {
-                posEntity.y = sizeWindow.y - radEntity;
-                velEntity.y *= -1;
-            }
-            if (posEntity.y - radEntity < 0)
-            {
-                posEntity.y = radEntity;
-                velEntity.y *= -1;
-            }
-
-            for (const auto& collidingEntity : m_entities.getEntities())
-            {
-                if (entity == collidingEntity)
-                    continue;
-                if (entity->id() >= collidingEntity->id())
-                    continue;
-
-                if (collidingEntity->getComponent<CCollision>().exists)
-                {
-                    auto& posCollidingEntity = collidingEntity->getComponent<CTransform>().pos;
-                    auto& velCollidingEntity = collidingEntity->getComponent<CTransform>().velocity;
-                    auto radCollidingEntity = collidingEntity->getComponent<CShape>().circle.getRadius();
-                    float distanceSquared = posEntity.distance_squared(posCollidingEntity);
-                    float sumRadiiSquared = (radEntity + radCollidingEntity) * (radEntity + radCollidingEntity);
-
-                    if (distanceSquared < sumRadiiSquared)
-                    {
-                        float distance = std::sqrt(distanceSquared);
-                        float radiusSum = std::sqrt(sumRadiiSquared);
-                        float penetration = radiusSum - distance;
-
-                        Vec2<float> relativeVel = velCollidingEntity - velEntity;
-                        Vec2<float> normal = (posCollidingEntity - posEntity) / posEntity.distance(posCollidingEntity);
-                        float normalVel = relativeVel.dot_product(normal);
-                        posEntity -= normal * penetration * 0.5;
-                        posCollidingEntity += normal * penetration * 0.5;
-
-                        if (normalVel > 0)
-                            return;
-                        Vec2<float> impulseVec = normal * normalVel * -1;
-                        velEntity -= impulseVec;
-                        velCollidingEntity += impulseVec;
-                    }
-                }
-            }
+        if (pos.y - radius < 0.0f)
+        {
+            pos.y = radius;
+            velocity.y = -velocity.y;
+        }
+        else if (pos.y + radius > windowSize.y)
+        {
+            pos.y = windowSize.y - radius;
+            velocity.y = -velocity.y;
         }
     }
+}
+
+void Game::entityCollision()
+{
+    const auto& entities = m_entities.getEntities();
+
+    for (size_t i = 0; i < entities.size(); ++i)
+    {
+        const auto& entityA = entities[i];
+
+        if (!entityA->getComponent<CCollision>().exists)
+            continue;
+
+        for (size_t j = i + 1; j < entities.size(); ++j)
+        {
+            const auto& entityB = entities[j];
+
+            if (!entityB->getComponent<CCollision>().exists)
+                continue;
+
+            resolveCollision(entityA, entityB);
+        }
+    }
+}
+
+void Game::resolveCollision(std::shared_ptr<Entity> entityA, std::shared_ptr<Entity> entityB)
+{
+    auto& transformA = entityA->getComponent<CTransform>();
+    auto& transformB = entityB->getComponent<CTransform>();
+
+    auto& posA = transformA.pos;
+    auto& posB = transformB.pos;
+
+    auto& velocityA = transformA.velocity;
+    auto& velocityB = transformB.velocity;
+
+    const float radiusA = entityA->getComponent<CCollision>().radius;
+
+    const float radiusB = entityB->getComponent<CCollision>().radius;
+
+    const Vec2<float> delta = posB - posA;
+
+    const float radiusSum = radiusA + radiusB;
+    const float distanceSquared = delta.length_squared();
+
+    // No collision.
+    if (distanceSquared >= radiusSum * radiusSum)
+        return;
+
+    const float distance = std::sqrt(distanceSquared);
+
+    // Prevent division by zero if both centers are at the same position.
+    Vec2<float> normal;
+
+    if (distance > 0.0001f)
+        normal = delta / distance;
+    else
+        normal = {1.0f, 0.0f};
+
+    const float penetration = radiusSum - distance;
+
+    // Separate the entities.
+    posA -= normal * (penetration * 0.5f);
+    posB += normal * (penetration * 0.5f);
+
+    // Relative velocity along the collision normal.
+    const Vec2<float> relativeVelocity = velocityB - velocityA;
+    const float normalVelocity = relativeVelocity.dot(normal);
+
+    // Entities are already moving apart.
+    if (normalVelocity > 0.0f)
+        return;
+
+    // Equal-mass elastic collision.
+    const Vec2<float> impulse = normal * normalVelocity;
+
+    velocityA += impulse;
+    velocityB -= impulse;
 }
 
 void Game::sEnemySpawner()

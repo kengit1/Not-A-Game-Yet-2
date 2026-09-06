@@ -68,6 +68,9 @@ class Game
     void sRender();
     void sEnemySpawner();
     void sCollision();
+    void boundaryCollision();
+    void entityCollision();
+    void resolveCollision(std::shared_ptr<Entity> entityA, std::shared_ptr<Entity> entityB);
 
     void spawnPlayer();
     void spawnEnemy();

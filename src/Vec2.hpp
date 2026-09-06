@@ -140,7 +140,7 @@ public:
         return (x * x) + (y * y);
     }
 
-    Vec2 normalize()
+    Vec2 normalize() const
     {
         auto len = length();
         if (len <= static_cast<T>(0))
@@ -150,7 +150,7 @@ public:
         return Vec2(x / len, y / len);
     }
 
-    float dot_product(const Vec2& rhs)
+    float dot(const Vec2& rhs) const
     {
         return rhs.x * x + rhs.y * y;
     }
