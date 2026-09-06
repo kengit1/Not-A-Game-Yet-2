@@ -115,10 +115,7 @@ void Game::run()
         // setDifficulty();
         m_entities.update();
 
-        if (m_currentFrame - m_lastEnemySpawnTime > 10)
-        {
-            sEnemySpawner();
-        }
+        sEnemySpawner();
         sMovement();
         sCollision();
         sUserInput();
@@ -332,7 +329,7 @@ void Game::sEnemySpawner()
     //
     //      (use m_currentFrame - m_lastEnemySpawnTime) to determine
     //      how long it has been since the last enemy spawned
-    if (m_currentFrame - m_lastEnemySpawnTime >= m_enemyConfig.SI)
+    if (m_currentFrame - m_lastEnemySpawnTime > m_enemyConfig.SI)
         spawnEnemy();
 }
 
